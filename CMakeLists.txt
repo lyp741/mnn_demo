@@ -3,7 +3,10 @@ project(test VERSION 0.1.0 LANGUAGES C CXX)
 
 
 set(CMAKE_CXX_STANDARD 14)
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_OSX_ARCHITECTURES "arm64")
 add_subdirectory(MNN)
 include_directories(MNN/include)
