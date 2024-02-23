@@ -4,12 +4,24 @@
 #include "MNN/ImageProcess.hpp"
 #include <stdio.h>
 #include <iostream>
+#include <chrono>
+
 class MNNcore{
     public:
     std::shared_ptr<MNN::Interpreter> mnn_interpreter;
     MNN::Session *mnn_session = nullptr;
     MNN::Tensor *input_tensor = nullptr; // assume single input.
     MNN::ScheduleConfig schedule_config;
+
+    void test_infer(){
+        // time it
+        auto start_time = std::chrono::high_resolution_clock::now();
+        mnn_interpreter->runSession(mnn_session);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
+
+    }
 
     void init_mnn() {
         std::string model_path = "./model.mnn";
@@ -36,20 +48,9 @@ class MNNcore{
         input_tensor->copyFromHostTensor(input);
         delete input;
 
-        // time it
-        auto start_time = std::chrono::high_resolution_clock::now();
-        mnn_interpreter->runSession(mnn_session);
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-        std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
-
-        // time it
-        start_time = std::chrono::high_resolution_clock::now();
-        mnn_interpreter->runSession(mnn_session);
-        end_time = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-        std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
-
+        for (int i=0; i<10000;i++){
+            test_infer();
+        }
 
         // std::cout<< "input_tensor: " << input_tensor->size() << std::endl;
         auto output_tensors = mnn_interpreter->getSessionOutputAll(mnn_session);
