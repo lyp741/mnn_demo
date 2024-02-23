@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <chrono>
-
+#include <sys/time.h>
+#include <unistd.h>
 class MNNcore{
     public:
     std::shared_ptr<MNN::Interpreter> mnn_interpreter;
@@ -15,12 +16,15 @@ class MNNcore{
 
     void test_infer(){
         // time it
-        auto start_time = std::chrono::high_resolution_clock::now();
+        struct timeval start_time;
+        struct timeval end_time;
+        gettimeofday(&start_time, NULL);
+        int start_time_ms = start_time.tv_sec*1000 + start_time.tv_usec/1000;
         mnn_interpreter->runSession(mnn_session);
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-        std::cout << "Execution time: " << duration.count() << " milliseconds" << std::endl;
-
+        gettimeofday(&end_time, NULL);
+        int end_time_ms = end_time.tv_sec*1000 + end_time.tv_usec/1000;
+        int delay_time_ms = end_time_ms - start_time_ms;
+        printf("delay time is %d ms\n", delay_time_ms);
     }
 
     void init_mnn() {
