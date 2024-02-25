@@ -36,7 +36,10 @@ class MNNcore{
         schedule_config.backendConfig = &backend_config;
         mnn_session = mnn_interpreter->createSession(schedule_config);
         input_tensor = mnn_interpreter->getSessionInput(mnn_session, nullptr);
-
+        auto shape = input_tensor->shape();
+        shape[0] = 31;
+        mnn_interpreter->resizeTensor(input_tensor, shape);
+        mnn_interpreter->resizeSession(mnn_session);
         auto input = new MNN::Tensor(input_tensor, MNN::Tensor::CAFFE);
         std::cout<< "input: ";
         for (auto in: input->shape()){
