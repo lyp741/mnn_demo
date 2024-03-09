@@ -15,12 +15,17 @@ set(CMAKE_OSX_ARCHITECTURES "arm64")
 find_package(Boost 1.84.0 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-# add_subdirectory(protobuf)
+add_subdirectory(protobuf)
+find_package(Protobuf REQUIRED)
+
+include_directories(protobuf/src)
+add_library(proto proto/KoalaAI_G2C.pb.h proto/KoalaAI_G2C.pb.cc)
+
 
 
 add_executable(main main.cpp)
 
 
-target_link_libraries(main ${Boost_LIBRARIES})
+target_link_libraries(main proto  ${Boost_LIBRARIES} libprotobuf)
 # target_link_libraries(env_cpp PRIVATE ${Boost_LIBRARIES})
 # target_link_libraries(env_cpp PRIVATE "C:/Program Files/boost/stage/lib")
