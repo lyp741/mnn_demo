@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <thread>
 #include "proto/KoalaAI_G2C.pb.h"
+#include <fstream>
 using namespace boost::interprocess;
 
 // 定义所需的类型
