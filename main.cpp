@@ -6,6 +6,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <thread>
+#include "proto/KoalaAI_G2C.pb.h"
 using namespace boost::interprocess;
 
 // 定义所需的类型
@@ -92,6 +93,17 @@ int consumer()
 }
 
 int main(int argc, char* argv[]){
+   msg::g2c::GameMassage msg;
+   std::ifstream ifs("../proto.b", std::ios::in | std::ios::binary);
+   std::string data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+   bool ok = msg.ParseFromString(data);
+   if (!ok) {
+      std::cerr << "ParseFromString failed" << std::endl;
+      return -1;
+   }
+
+   std::cout << msg.DebugString() << std::endl;
+
    if (argc == 1){
       //start a process to do the work
       std::string s(argv[0]); s += " child ";
