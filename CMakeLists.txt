@@ -16,9 +16,7 @@ find_package(Boost 1.84.0 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_subdirectory(protobuf)
-find_package(Protobuf REQUIRED)
 
-include_directories(protobuf/src)
 add_library(proto proto/KoalaAI_G2C.pb.h proto/KoalaAI_G2C.pb.cc)
 
 
