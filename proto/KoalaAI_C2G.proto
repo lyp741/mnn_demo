@@ -1,0 +1,66 @@
+syntax = "proto3";
+package msg.c2g;
+option csharp_namespace = "Koala.Robot.AI.Msg.C2G";
+
+//////////////////////////////////////// 协议号 ////////////////////////////////////////
+
+enum CMD2G {
+    CMD2G_LINK_REQ = 0;
+    CMD2G_A_I_SERVER_MESSAGE = 1;
+}
+
+//////////////////////////////////////// 类型 ////////////////////////////////////////
+
+enum AIServerMsgType {
+    GAME_GLOBAL_INFO_REQ = 0;
+    CHOOSE_MAP = 1; // step3. 发送AIServer选择地图信息
+    GAME_INIT_REQ = 2; // step4. 发送游戏初始化请求，等待游戏侧发送game state
+    ACTION_REQ = 3; // step5. 发送action request
+}
+
+//////////////////////////////////////// 消息 ////////////////////////////////////////
+
+message LinkReq {   
+}
+
+message Vector2D {
+    float x = 1;
+    float y = 2;
+}
+
+message Vector3D {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message GameConfigure {
+    uint32 mapId = 1;
+    uint32 numOfAI = 2;
+    repeated AgentInitOption agentInitOptions = 3;//agent的初始化策略，若没有某agent的策略则默认初始化
+}
+
+message AgentInitOption {
+    uint64 agentId = 1;
+    uint32 startType = 2;       //agent出生点设置类型，0=出生点，1=存档点，2=指定位置，3=先到指定存档点，再到指定位置，4=指定存档点（根据Id）
+    uint32 targetPointLevel = 3;//agent在第几级存档点出生，0=出生点，默认为0
+    uint32 targetPointIndex = 4;//0=出生点，1-5=存档点
+    Vector3D startPosition = 5;
+    uint64 savePointId = 6;     //startType == 4 指定的存档点的id
+    Vector3D velocity = 7;      //初始化速度
+}
+
+message AIActionMessage {
+    uint64 agentId = 1;
+    Vector2D moveDir = 2;
+    repeated uint32 actionsType = 3;//1为Jump对应jump, 2为Dash对应sprint，3为Interact对应attack，4为Prop对应使用道具 
+    Vector2D propDir = 4;//投掷道具使用角度
+    bool pauseState = 5;//暂停状态 true = 暂停
+}
+
+message AIServerMessage {
+    AIServerMsgType messageType = 1;
+    GameConfigure gameConfig = 2;//messageType == AIServerMsgType.CHOOSE_MAP 需要mapId且只有该参数生效
+    repeated AIActionMessage actionOfAIs = 3;
+    bool pauseAgents = 4;//暂停参数 true = 暂停
+}

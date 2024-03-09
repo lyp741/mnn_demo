@@ -1,0 +1,292 @@
+syntax = "proto3";
+package msg.g2c;
+option csharp_namespace = "Koala.Robot.AI.Msg.G2C";
+
+//////////////////////////////////////// 协议号 ////////////////////////////////////////
+
+enum CMD2C {
+    CMD2C_LINK_RSP = 0;
+    CMD2C_GAME_MESSAGE = 1;
+}
+
+//////////////////////////////////////// 类型 ////////////////////////////////////////
+
+enum GameMsgType {
+    GAME_GLOBAL_INFO = 0;//发送游戏整体信息，例如每个地图的信息
+    GAME_INFO = 1;//发送单局游戏信息，例如高度图，存档点信息
+    GAME_STATE = 2;//发送game state
+}
+
+enum AnimationStateType {//角色重要的动画状态，若属于其他状态则一律默认为UNKOWN_STATE
+    UNKNOWN_STATE = 0;
+    JUMP_STATE = 1;
+    ATTACK_STATE = 2;
+    SPRINT_STATE = 3;
+    INCAPACITATED_STATE = 4;//被撞击、失控
+    GETUP_STATE = 5;        //起身
+    COLLAPSE_STATE = 6;     //倒下
+    DIZZY_STATE = 7;        //眩晕
+    PALSY_STATE = 8;        //麻痹
+    BUBBLE_STATE = 9;       //泡泡
+    FALL_STATE = 10;        //下落
+    MOVE_STATE = 11;        //移动
+    IDLE_STATE = 12;
+}
+
+enum ShapeType {
+    UNKNOWN_SHAPE = 0;
+    CUBE = 1;
+    SPHERE = 2;
+    CYLINDER = 3;
+    CAPSULE = 4;
+    RING = 5;
+    HALFCYLINDER = 6;
+    TRIANGULARPRISM = 7;
+    ISOSCELESTRIANGULARPRISM = 8;
+    CIRCULARCONE = 9;
+    SQUAREPYRAMID = 10;
+    SEMICIRCULARRING = 11;
+    HEXAGONALPRISM = 12;
+    HEXAGONALPYRAMID = 13;
+    TRAPEZOIDALPYRAMID = 14;
+    ONEFOURTHCIRCULARRING = 15;
+    BASESECTOR = 16;
+    TRIANGULARPYRAMID = 17;
+}
+
+enum ItemFuncType {
+    UNKNOWN_FUNC = 0;
+    BASIC_PYHSICS = 1;            //普通物理碰撞
+    ELECTRIC_FAN = 2;             //风扇
+    BOUNCE_WALL = 3;              //气垫墙
+    CONVEYOR_ZONE = 4;            //传送带
+    TRAMPOLINE = 5;               //蹦床
+    SPRINGBOARDS = 6;             //弹板
+    SPEED_UP = 7;                 //加速方块、风圈 
+    SOKOBAN = 8;                  //箱子（能推动，能踮脚）
+    OBSCURE = 9;                  //视野障碍
+    SELF_DESTORY = 10;            //多次触发后销毁
+    BUBBLE = 11;                  //泡泡
+    MINE = 12;                    //地雷
+    RAY = 13;                     //光线
+    BACKTRACKING = 14;            //回溯
+    TIMERCTRL_FLIP_FLOOR = 15;    //翻转地板 定时
+    BOMB_LIKE = 16;               //爆炸物
+    TIMER = 17;                   //计时器
+    // todo ...
+}
+
+enum EventType {
+    UNKNOWN_EVENT = 0;
+    FALL_DOWN = 1;
+    ARRIVE_TARGET = 2;
+    ARRIVE_DESTRINATION = 3;
+    ATTACK = 4;
+    AGENT_INCAPACITATED = 5;
+    AGENT_GETUP = 6;
+    AGENT_COLLAPSE = 7;
+    USE_PROP = 8;
+}
+
+enum MapType {
+    UNKNOWN = 0;
+    RACE = 1;
+    SURVIVAL = 2;
+    KART = 3;
+    TEAMSCORE = 4;
+    INDIVIDUALSCORE = 5;
+}
+
+enum PropFuncType {
+    UNKNOWN_PROP = 0;   //
+    AIR_CUSHION = 1;    //气垫
+    SMOKE_GRENADES = 2; //烟雾弹
+    BOMB = 3;           //炸弹
+    BANANA = 4;         //大香蕉
+    SPRINT_SHOES = 5;   //冲刺鞋
+    MOLE_MINES = 6;     //鼹鼠地雷
+    HAMSTER_BALLS = 7;  //仓鼠球
+    SQUID_BOMB = 8;     //乌贼
+    BAZOOKA = 9;        //火箭筒
+}
+
+enum PropUseType {
+    IMMEDIATE = 0;  //原地使用
+    RAISE = 1;      //投掷物
+    WAVE = 2;       //近战武器
+    SHOOT = 3;      //发射器
+}
+
+enum GamePointType {
+    SPAWN = 0;      //出生点
+    SAVE = 1;       //存档点
+    DESTINATION = 2;//终点
+}
+
+enum EndGameType {
+    TBD = 0;    //待定 to be determined
+    WIN = 1;    //胜利
+    LOSE = 2;   //失败
+}
+
+//////////////////////////////////////// 消息 ////////////////////////////////////////
+
+message LinkRsp {   
+}
+
+message Vector3D {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message MapInfo {
+    string mapName = 1;
+    uint32 mapId = 2;
+    MapType mapType = 3; //游戏类型
+    // ... 其他地图信息，尽量多点，一次到位
+}
+
+message GameGlobalInfo {
+    repeated MapInfo mapInfo = 1;//地图信息列表
+}
+
+message ItemWayPoint {
+    Vector3D pos = 1;
+    Vector3D normal = 2;
+}
+
+message MapHeightInfo {
+    Vector3D originPos = 1;         //地图左下角坐标
+    float granularityHeight = 2;    //地图粒度，例如1m
+    float granularityWidth = 3;     //地图粒度，例如1m
+    float mapHeight = 4;            //z轴方向
+    float mapWidth = 5;             //x轴方向
+    repeated float heightValue = 6; //用一维数组存储的二维数组 x轴方向优先于z轴方向
+}
+
+message GamePointInfo {
+    uint64 id = 1;          //id
+    GamePointType type = 2; //type
+    Vector3D pos = 3;       //位置
+    Vector3D rot = 4;       //朝向
+    Vector3D size = 5;      //大小
+    uint32 level = 6;       //存档点等级
+}
+
+message GameInfo {
+    repeated GamePointInfo gamePoints = 1;//信息
+}
+
+message TargetPointInfo {
+    uint64 id = 1;          //存档点id
+    bool isDestination = 2; //是否为终点
+    Vector3D pos = 3;       //位置
+    Vector3D rot = 4;       //朝向
+    Vector3D size = 5;      //大小
+    uint32 level = 6;       //存档点等级
+}
+
+message GameState {
+    uint64 timestamp = 1;   //发送时间戳
+    float timeLeft = 2;     //游戏时间，单位为秒
+    uint32 mapId = 3;
+    bool isGameEnd = 4;
+    repeated TargetPointInfo targetPointsInfo = 5;//存档点和终点信息
+}
+
+message AgentPropState {
+    uint32 durable = 1;                 //耐久度
+    uint32 useCount = 2;                //当前使用次数
+    uint32 cd = 3;                      //cd
+    uint32 curCD = 4;                   //当前cd
+    bool inCD = 5;                      //是否在cd中
+    PropFuncType propFuncType = 6;      //道具类型
+    uint32 delayedDestroy = 7;          //道具使用完毕到销毁的延迟时间
+    PropUseType playerPropUseType = 8;  //使用类型 
+}
+
+message AgentState {
+    uint64 id = 1;//Agent id
+    Vector3D pos = 2;
+    Vector3D rot = 3;
+    Vector3D vel = 4;
+    AnimationStateType animationState = 5;  //agent所处状态
+    AgentPropState agentProp = 6;           //目前玩家只能拥有一个道具
+    bool doNotCtrl = 7;                     //控制标识 false=可控 true=不可控
+    EndGameType endGameState = 8;           //agent是否获胜的标识 TBD=待定 WIN=胜利 LOSE=失败
+    Vector3D forward = 9;
+    Vector3D right = 10;
+    Vector3D up = 11;
+    repeated uint32 passTargetPoint = 12;   //通过的检查点或存档点的id记录，跑酷对应存档点，赛车对应检查点
+    Vector3D goalPoint = 13;
+    bool Invincible = 14;                   //无敌状态
+    float curHP = 15;
+    float maxHP = 16;
+}
+
+message ItemState {
+    uint64 id = 1;              //item id
+    Vector3D pos = 2;           //位置
+    Vector3D rot = 3;           //朝向
+    Vector3D size = 4;          //大小
+    ShapeType shapeType = 5;    //形状类型，例如Cube、Ball
+    ItemFuncType funcType = 6;  //功能类型，例如普通物理、风筒
+    Vector3D velocity = 7;
+    Vector3D angularVelocity = 8;
+    string itemFuncData = 9;    //主要参数，需要根据FuncType来解析数据
+    repeated ItemWayPoint wayPoints = 10;
+    uint32 itemTemplateId = 11; //默认0，有值说明是被 创建行为或创生器 创建出来的物体，需要获取 _ItemTemplate 中的对应地图的配置
+    uint64 createByProp = 12;   //默认-1，有值说明是玩家使用道具创建的item，值为玩家对应的id
+    uint32 propItemLevel = 13;  //默认1，标识item到了prop逻辑的阶段数，举例：炸弹，当炸弹丢出时level为1，当炸弹达到触发条件创建爆炸范围时level为2，注意这两个itemState的id会不一样   
+}
+
+message PropState {
+    uint64 id = 1;                  //prop id
+    Vector3D pos = 2;               //位置
+    Vector3D rot = 3;               //朝向
+    Vector3D size = 4;              //大小
+    PropFuncType propFuncType = 5;  //道具类型
+    PropUseType useType = 6;        //使用类型
+    uint32 durable = 7;             //耐久度
+    uint32 cd = 8;                  //cd
+    uint32 delayedDestroy = 9;      //道具使用完毕到销毁的延迟时间
+    Vector3D speed = 10;            //加速的速度           
+}
+
+message EventInfo {
+    uint32 id = 1;              //event id
+    EventType type = 2;
+    uint64 sourceAgentId = 3;
+    uint64 targetAgentId = 4;   //若无则为0
+    string eventData = 5;       //相关数值。若为ARRIVE_TARGET则为到达第几个存档点，若为ATTACK，可能是程度？
+}
+
+message FrameDatas {
+    float time = 1;             //计时数
+    string triggerEvent = 2;    //触发事件名称
+}
+
+message TimerState {
+    uint32 id = 1;                      //timer id
+    repeated FrameDatas frameDatas = 2; //计时事件信息
+    bool isStart = 3;                   //是否开始
+    bool isEnd = 4;                     //是否结束
+    bool isLaunched = 5;                //
+    bool isPaused = 6;                  //是否暂停
+    float currentTime = 7;              //当前计时
+    float targetTime = 8;               //结束计时数
+    bool reClocking = 9;                //是否重复
+}
+
+message GameMassage {
+    GameMsgType messageType = 1;            //默认为1
+    GameGlobalInfo gameGlobalInfo = 2;      //游戏整体信息，例如每个地图的信息
+    GameInfo gameInfo = 3;                  //单局游戏信息，例如高度图
+    GameState gameState = 4;
+    repeated AgentState agentsState = 5;
+    repeated ItemState itemsState = 6;
+    repeated PropState propsState = 7;
+    repeated EventInfo eventsInfo = 8;      //期间触发的重要事件
+    repeated TimerState timersState = 9;    //计时器机关
+}

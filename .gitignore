@@ -1,2 +1,4 @@
 build/
 MNN/
+boost
+protobuf
