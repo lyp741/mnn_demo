@@ -2,3 +2,8 @@ build/
 MNN/
 boost
 protobuf
+eigen-3.4.0
+pybind11
+.DS_Store
+*.pyc
+.vscode/settings.json
