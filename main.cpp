@@ -16,17 +16,21 @@ int main() {
     boost::interprocess::managed_shared_memory segment(boost::interprocess::open_or_create, "MySharedMemory", 65536);
 
     // 获取分配器
+    CharAllocator char_alloc(segment.get_segment_manager());
     ShmemAllocator alloc_inst(segment.get_segment_manager());
 
     // 在共享内存中创建 map
-    SharedMap *map = segment.find_or_construct<SharedMap>("MyMap")(std::less<SharedString>(), alloc_inst);
 
-    // 插入数据
-    map->emplace("key1", "value1");
-    map->emplace("key2", "value2");
+    SharedMap *myMap = segment.find_or_construct<SharedMap>("MyMap")(std::less<SharedString>(), alloc_inst);
+
+
+    //insert data
+    myMap->insert(ValueType(SharedString("key1"), SharedString("value1")));
+    myMap->insert(ValueType(SharedString("key2"), SharedString("value2")));
+    myMap->insert(ValueType(SharedString("key3"), SharedString("value3")));
 
     // 遍历输出
-    for (auto& pair : *map) {
+    for (auto& pair : *myMap) {
         std::cout << pair.first << " : " << pair.second << std::endl;
     }
 

@@ -1,13 +1,13 @@
 #include <pybind11/pybind11.h>
 #include <string>
-#include "proto/KoalaAI_G2C.pb.h"
+// #include "proto/KoalaAI_G2C.pb.h"
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp> 
 #include <boost/interprocess/containers/map.hpp>
-
+#include <iostream>
 #include <fstream>
 #include <chrono>
 #include <unistd.h>
@@ -27,7 +27,7 @@ typedef vector<shared_string, shared_string_allocator> shared_vector_string;
 typedef vector<int, int_allocator> shared_vector_int;
 typedef shared_string    KeyType;
 typedef shared_string  MappedType;
-typedef std::pair<shared_string, shared_string> ValueType;
+typedef std::pair<const shared_string, shared_string> ValueType;
 typedef allocator<ValueType, segment_manager_t> string_map_allocator;
 typedef map<KeyType, MappedType, std::less<KeyType>, string_map_allocator> string_map;
 class Message
@@ -46,16 +46,16 @@ typedef allocator<Message, segment_manager_t> message_allocator;
 typedef vector<Message, message_allocator> shared_vector_message;
 
 
-std::string process_string(py::bytes &input) {
-    std::string input_str(input);
-    msg::g2c::GameMassage msg;
-    // std::ifstream ifs("../proto.b", std::ios::in | std::ios::binary);
-    // std::string data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    bool ok = msg.ParseFromString(input_str);
-    // print
-    std::cout << msg.DebugString() << std::endl;
-    return msg.DebugString();
-}
+// std::string process_string(py::bytes &input) {
+//     std::string input_str(input);
+//     msg::g2c::GameMassage msg;
+//     // std::ifstream ifs("../proto.b", std::ios::in | std::ios::binary);
+//     // std::string data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+//     bool ok = msg.ParseFromString(input_str);
+//     // print
+//     std::cout << msg.DebugString() << std::endl;
+//     return msg.DebugString();
+// }
 
 std::string SHM_NAME = "MySharedMemory";
 managed_shared_memory *segment;
@@ -80,7 +80,6 @@ bool init_shm(){
     myVector = segment->construct<shared_vector_message>("proto_list")(*message_alloc_inst);
     
     string_map_alloc_inst = new string_map_allocator(segment->get_segment_manager());
-
     action_map = segment->construct<string_map>("actions_map")(std::less<KeyType>(), *string_map_alloc_inst);
 
     std::cout << "init shm success" << std::endl;
@@ -124,10 +123,51 @@ py::tuple fetch_proto(){
     }
 }
 
+bool push_actions(std::string req_id, py::bytes a){
+    std::string action(a);
+    std::cout << "push actions" << action.length() << std::endl;
+    actions_map_mtx->lock();
+    action_map->insert(std::make_pair(shared_string(req_id.c_str(), req_id.length(), *alloc_inst), shared_string(action.c_str(), action.length(), *alloc_inst)));
+    actions_map_mtx->unlock();
+    return true;
+}
+
+py::bytes fetch_actions(std::string req_id){
+    //wait for 0.12s
+    //get current timestep
+    auto start = std::chrono::high_resolution_clock::now();
+    auto stop = std::chrono::high_resolution_clock::now();
+    std::string actions;
+    int count = 0;
+    while(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() < 120){
+        count++;
+        actions_map_mtx->lock();
+        auto action = action_map->find(shared_string(req_id.c_str(), req_id.length(), *alloc_inst));
+        if(action==action_map->end()){
+            actions_map_mtx->unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            stop = std::chrono::high_resolution_clock::now();
+            continue;
+        }
+        std::cout<<"found actions"<<std::endl;
+        std::cout << "fetch actions" << action->second.length() << std::endl;
+        //basic_string to std::string
+        actions = std::string(action->second.begin(), action->second.end());
+        action_map->erase(shared_string(req_id.c_str(), req_id.length(), *alloc_inst));
+        actions_map_mtx->unlock();
+        break;
+    }
+    std::cout << "count:" << count << std::endl;
+    std::cout << "fetch actions, length:" << actions.length() << std::endl;
+    return py::bytes(actions.c_str(), actions.length());
+}
+
 PYBIND11_MODULE(bip_msg, m) {
-    m.def("process_string", &process_string, "Process a string"),
+    // m.def("process_string", &process_string, "Process a string"),
     m.def("init_shm", &init_shm, "init_shm"),
     m.def("open_shm", &open_shm, "open_shm"),
     m.def("dispatch_proto", &dispatch_proto, "dispatch_proto"),
-    m.def("fetch_proto", &fetch_proto, "fetch_proto");
+    m.def("fetch_proto", &fetch_proto, "fetch_proto"),
+    m.def("push_actions", &push_actions, "push_actions"),
+    m.def("fetch_actions", &fetch_actions, "fetch_actions");
 }

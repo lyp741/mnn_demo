@@ -1,6 +1,6 @@
 import bip_msg
 import pickle
-
+import time
 with open("game_msg2.pkl", "rb") as f:
     game_msg = pickle.load(f)
 
@@ -13,3 +13,6 @@ print(len(game_msg))
 # ret = bip_msg.process_string(game_msg)
 # print((ret))
 
+bip_msg.push_actions("12342", game_msg)
+time.sleep(0.16)
+bip_msg.fetch_actions("12342")
