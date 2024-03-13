@@ -150,8 +150,8 @@ void remove_actions(){
     auto now = std::chrono::high_resolution_clock::now();
     std::srand(static_cast<unsigned int>(std::time(0))); // 设置随机种子
     actions_map_mtx->lock();
-    if (action_map->size() > 10){
-        for (int i=0; i < 10; i++){
+    if (action_map->size() > 3){
+        for (int i=0; i < 3; i++){
             auto it = action_map->begin();
             // 生成 [0, mymap.size()-1] 内的一个随机数
             int random_step = std::rand() % action_map->size();
