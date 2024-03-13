@@ -28,9 +28,9 @@ typedef vector<int, int_allocator> shared_vector_int;
 
 class Actions{
     public:
-    std::chrono::steady_clock::time_point timestamp;
+    std::chrono::time_point<std::chrono::high_resolution_clock> timestamp;
     shared_string actions;
-    Actions(std::chrono::steady_clock::time_point ts, shared_string a): timestamp(ts), actions(a){}
+    Actions(std::chrono::time_point<std::chrono::high_resolution_clock> ts, shared_string a): timestamp(ts), actions(a){}
 };
 typedef shared_string    KeyType;
 typedef Actions  MappedType;
