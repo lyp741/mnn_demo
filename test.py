@@ -3,9 +3,9 @@ import pickle
 import time
 with open("game_msg2.pkl", "rb") as f:
     game_msg = pickle.load(f)
-
+bip_msg.remove_shm()
 print(type(game_msg))
-bip_msg.init_shm()
+bip_msg.open_shm()
 ret = bip_msg.dispatch_proto(123456, "123456", game_msg, "123456")
 msg = bip_msg.fetch_proto()
 print(len(msg[2]))
