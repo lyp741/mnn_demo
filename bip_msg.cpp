@@ -176,6 +176,41 @@ bool push_actions(std::string req_id, py::bytes a){
     return true;
 }
 
+py::list fetch_all_actions(py::list& req_ids){
+    py::list actions;
+    for (int i=0; i < req_ids.size(); i++){
+        std::string req_id = req_ids[i].cast<std::string>();
+
+        actions_map_mtx->lock();
+        auto action = action_map->find(shared_string(req_id.c_str(), req_id.length(), *alloc_inst));
+        if(action==action_map->end()){
+            actions_map_mtx->unlock();
+            actions.append(py::none());
+            continue;
+        }
+        std::cout<<"found actions"<<std::endl;
+        std::cout << "fetch actions" << action->second.actions.length() << std::endl;
+        std::string str_action = std::string(action->second.actions.begin(), action->second.actions.end());
+        actions.append(py::bytes(str_action.c_str(), str_action.length()));
+        
+        actions_map_mtx->unlock();
+    }
+    return actions;
+}
+
+void delete_actions(py::list& req_ids){
+    for (int i=0; i < req_ids.size(); i++){
+        std::string req_id = req_ids[i].cast<std::string>();
+        actions_map_mtx->lock();
+        try{
+            action_map->erase(shared_string(req_id.c_str(), req_id.length(), *alloc_inst));
+        }
+        catch(...){
+        }
+        actions_map_mtx->unlock();
+    }
+}
+
 py::bytes fetch_actions(std::string req_id){
     //wait for 0.12s
     //get current timestep
@@ -216,5 +251,7 @@ PYBIND11_MODULE(bip_msg, m) {
     m.def("dispatch_proto", &dispatch_proto, "dispatch_proto"),
     m.def("fetch_proto", &fetch_proto, "fetch_proto"),
     m.def("push_actions", &push_actions, "push_actions"),
-    m.def("fetch_actions", &fetch_actions, "fetch_actions");
+    m.def("fetch_actions", &fetch_actions, "fetch_actions"),
+    m.def("fetch_all_actions", &fetch_all_actions, "fetch_all_actions"),
+    m.def("delete_actions", &delete_actions, "delete_actions");
 }
