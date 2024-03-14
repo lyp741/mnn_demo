@@ -7,6 +7,7 @@
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp> 
 #include <boost/interprocess/containers/map.hpp>
+#include <boost/interprocess/containers/deque.hpp>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -23,8 +24,6 @@ typedef allocator<char, segment_manager_t> char_allocator;
 typedef allocator<int, segment_manager_t> int_allocator;
 typedef basic_string<char, std::char_traits<char>, char_allocator> shared_string;
 typedef allocator<shared_string, segment_manager_t> shared_string_allocator;
-typedef vector<shared_string, shared_string_allocator> shared_vector_string;
-typedef vector<int, int_allocator> shared_vector_int;
 
 class Actions{
     public:
@@ -50,7 +49,7 @@ public:
    }
 };
 typedef allocator<Message, segment_manager_t> message_allocator;
-typedef vector<Message, message_allocator> shared_vector_message;
+typedef deque<Message, message_allocator> shared_vector_message;
 
 
 // std::string process_string(py::bytes &input) {
@@ -119,6 +118,9 @@ bool dispatch_proto(double timestep, std::string req_id, py::bytes &request, std
     std::string data(request);
     Message msg(timestep, req_id, data, agents_id, *char_alloc_inst);
     proto_list_mtx->lock();
+    if (myVector->size() > 2000){
+        myVector->pop_front();
+    }
     myVector->push_back(msg);
     proto_list_mtx->unlock();
     return true;
